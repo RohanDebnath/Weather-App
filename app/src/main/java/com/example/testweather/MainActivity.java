@@ -1,5 +1,6 @@
 package com.example.testweather;
 
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
@@ -27,10 +28,15 @@ public class MainActivity extends AppCompatActivity {
     private AutoCompleteTextView autoCompleteTextViewCity;
     private Button buttonSearch;
     private ProgressBar progressBar;
-    private TextView textViewWeather;
+    private TextView textViewWeather,tempview,Humidity,WindSpeed,Condition;
     private ImageView imageViewWeather;
 
     private static final String API_KEY = "5373f6fe03ad4d92a2b180421232705";
+
+    private static final String SHARED_PREFS_KEY = "WeatherAppPrefs";
+    private static final String LAST_SEARCHED_CITY_KEY = "LastSearchedCity";
+    private SharedPreferences sharedPreferences;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,12 +47,23 @@ public class MainActivity extends AppCompatActivity {
         buttonSearch = findViewById(R.id.buttonSearch);
         progressBar = findViewById(R.id.progressBar);
         textViewWeather = findViewById(R.id.textViewWeather);
+        tempview=findViewById(R.id.temp_View);
+        Humidity=findViewById(R.id.humidity_id);
+        WindSpeed=findViewById(R.id.wind_id);
+        Condition=findViewById(R.id.condition_id);
         imageViewWeather = findViewById(R.id.imageViewWeather);
+        sharedPreferences = getSharedPreferences(SHARED_PREFS_KEY, MODE_PRIVATE);
+
 
         // Set up the adapter for auto-suggestions
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_dropdown_item_1line, new String[]{});
         autoCompleteTextViewCity.setAdapter(adapter);
+        String lastSearchedCity = sharedPreferences.getString(LAST_SEARCHED_CITY_KEY, "");
+        if (!lastSearchedCity.isEmpty()) {
+            autoCompleteTextViewCity.setText(lastSearchedCity);
+            new FetchWeatherTask().execute(lastSearchedCity);
+        }
 
         // Set up item click listener for auto-suggestions
         autoCompleteTextViewCity.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -63,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
                 String city = autoCompleteTextViewCity.getText().toString().trim();
                 if (!city.isEmpty()) {
                     new FetchWeatherTask().execute(city);
+                    sharedPreferences.edit().putString(LAST_SEARCHED_CITY_KEY, city).apply();
                 }
             }
         });
@@ -186,7 +204,16 @@ public class MainActivity extends AppCompatActivity {
                             + "Humidity: " + humidity + "%\n"
                             + "Wind Speed: " + windSpeed + " km/h\n"
                             + "Condition: " + condition;
-                    textViewWeather.setText(weatherInfo);
+                    String Temp=temperature + " °C\n";
+                    String Humi=humidity + " °%\n";
+                    String WS=windSpeed + " Kmp/H\n";
+                    String Condi=condition + " °C\n";
+                //    textViewWeather.setText(weatherInfo);
+                    tempview.setText(Temp);
+                    Humidity.setText(Humi);
+                    WindSpeed.setText(WS);
+                    Condition.setText(Condi);
+
 
                     // Update weather condition image
                     int imageResId = R.drawable.default_image; // Set a default image resource
